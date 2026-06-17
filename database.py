@@ -9,69 +9,13 @@ conn = mysql.connector.connect(
 cursor = conn.cursor()
 
 
-def login_admin(login_details):
+def manager_login(data):
+    print("Manager login dat:- ", data)
     try:
-        cursor.execute("SELECT * FROM `admin` WHERE `username`=%s and `password`=%s", login_details)
+        cursor.execute("SELECT * FROM `manager` WHERE `email`=%s AND `password`=%s", data)
         return cursor.fetchone()
-    except:
-        return False
-
-
-# -------------------------------------------------------------------------------------------------------------------
-# MANAGERS CRUD
-def add_manager_data(manager_details):
-    print("Database->manager_data:-", manager_details)
-    try:
-        cursor.execute(
-            "INSERT INTO `manager` (`name`,`phone_number`,`email`,`password`,`address`) VALUES(%s,%s,%s,%s,%s)",
-            manager_details)
-        conn.commit()
-        return True
     except mysql.connector.Error as error:
-        print("MySQL error :- ", error)
-        return False
-
-
-def get_managers():
-    try:
-        cursor.execute("SELECT * FROM `manager`")
-        return cursor.fetchall()
-    except:
-        return False
-
-
-def delete_manager(manager_details):
-    print("Database->Arg:", manager_details)
-    cursor.execute("DELETE FROM `manager` WHERE `id`=%s", manager_details)
-    conn.commit()
-    return True
-
-
-def update_manager_data(manager_details):
-    try:
-        cursor.execute(
-            "UPDATE `manager` SET `name`=%s,`phone_number`=%s,`email`=%s,`password`=%s,`address`=%s WHERE `id`=%s",
-            manager_details)
-        conn.commit()
-        return True
-    except mysql.connector.Error as error:
-        print("MYSql error:-", error)
-        return False
-
-
-# ---------------------------------------------------------------------------------------------------------
-# AIRLINE CRUD
-
-def add_airline_data(airline_details):
-    print("Database->airline_data:-", airline_details)
-    try:
-        cursor.execute(
-            "INSERT INTO `airlines`(`airline_id`,`airline_name`,`founded_year`,`country`,`headquarters`) VALUES(%s,%s,%s,%s,%s)",
-            airline_details)
-        conn.commit()
-        return True
-    except mysql.connector.Error as error:
-        print("MySQL error :-", error)
+        print("Error:- ", error)
         return False
 
 
@@ -84,40 +28,6 @@ def get_airlines():
         return False
 
 
-def delete_data(airline_details):
-    print("Database->Arg:", airline_details)
-    cursor.execute("DELETE FROM `airlines` WHERE `id`=%s", airline_details)
-    conn.commit()
-    return True
-
-
-def update_airline_data(airline_details):
-    try:
-        cursor.execute(
-            "UPDATE `airlines` SET `airline_id`=%s, `airline_name`=%s, `founded_year`=%s, `country`=%s, `headquarters`=%s WHERE `id`=%s",
-            airline_details)
-        conn.commit()
-        return True
-    except mysql.connector.Error as error:
-        print("MySQL error:-", error)
-        return False
-
-
-# -------------------------------------------------------------------------------------------------
-# AIRCRAFT CRUD
-def add_aircraft_data(aircraft_data):
-    print("Database->aircraft_data:", aircraft_data)
-    try:
-        cursor.execute(
-            "INSERT INTO `aircrafts`(`aircraft_id`,`model`,`sitting_capacity`,`engine_type`,`other_description`) VALUES(%s,%s,%s,%s,%s)",
-            aircraft_data)
-        conn.commit()
-        return True
-    except mysql.connector.Error as error:
-        print("Mysql Error:", error)
-        return False
-
-
 def get_aircraft_data():
     try:
         cursor.execute("SELECT * FROM `aircrafts`")
@@ -127,77 +37,89 @@ def get_aircraft_data():
         return False
 
 
-def delete_aircraft_data(aircraft_type):
-    print("Database->Arg:", aircraft_type)
-    cursor.execute("DELETE FROM `aircrafts`WHERE`id`=%s", aircraft_type)
-    conn.commit()
-    return True
-
-
-def update_aircraft_data(aircraft_data):
+def add_flight_booking_data(booking_data):
+    print("Booking details:- ", booking_data)
     try:
         cursor.execute(
-            "UPDATE `aircrafts` SET `aircraft_id`=%s,`model`=%s,`sitting_capacity`=%s,`engine_type`=%s,`other_description`=%s WHERE `id`=%s",
-            aircraft_data)
+            "INSERT INTO booking (`flight_number`, `airline`, `departure_airport`,`destination`, `date`, `aircraft_type`,`ticket_price`,`number_of_tickets`,`total_price`, `passenger_name`, `date_of_birth`, `gender`, `passport_id`, `contact_number`,`passenger_email`, `status`,`added_by`) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+            booking_data)
         conn.commit()
         return True
-    except mysql.connector.Error as error:
-        print("Mysql Error:", error)
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
         return False
 
 
-# -----------------------------------------------------------------------------------------------------------------------
-# ALL BOOKINGS
-
-def get_all_bookings():
+def get_bookings(manager_email):
+    print("Manager email:- ", manager_email)
     try:
-        cursor.execute("SELECT * FROM booking")
+        cursor.execute("SELECT * FROM booking WHERE `added_by`=%s", manager_email)
         return cursor.fetchall()
     except mysql.connector.Error as err:
         print(f"Error: {err}")
         return []
 
 
-def get_all_filtered_bookings(data):
-    print("Selected status:- ", data)
-    cursor.execute("SELECT * FROM `booking` WHERE `status`=%s", data)
-    return cursor.fetchall()
-
-
-def confirm_booking(data):
-    print("Booking data:- ", data)
+def get_confirmed_bookings(manager_email):
+    print("Manager email:- ", manager_email)
     try:
-        cursor.execute("UPDATE `booking` SET `status`=%s WHERE `id`=%s", data)
+        cursor.execute("SELECT * FROM booking WHERE `status`='Confirmed' AND `added_by`=%s", manager_email)
+        return cursor.fetchall()
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+        return []
+
+
+def get_pending_bookings(manager_email):
+    print("Manager email:- ", manager_email)
+    try:
+        cursor.execute("SELECT * FROM booking WHERE `status`='Pending' AND `added_by`=%s", manager_email)
+        return cursor.fetchall()
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+        return []
+
+
+def delete_booking(booking_id):
+    try:
+        cursor.execute("DELETE FROM booking WHERE id=%s", (booking_id,))
         conn.commit()
         return True
-    except mysql.connector.Error as error:
-        print("MySQL error:- ", error)
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
+        return False
+
+
+def update_booking(booking_data):
+    try:
+        query = """
+        UPDATE booking SET passenger_name=%s, phone_number=%s, address=%s, email=%s, occupation=%s,
+                            gender=%s, flight_number=%s, date_of_booking=%s, price=%s, route_from=%s,
+                            route_to=%s, num_passengers=%s, airline_name=%s
+        WHERE id=%s
+        """
+        cursor.execute(query, booking_data)
+        conn.commit()
+        return True
+    except mysql.connector.Error as err:
+        print(f"Error: {err}")
         return False
 
 
 # ----------------------------------------------------------------------------------------------------------------------
 # MEASURE VALUES
-def total_airlines():
+def total_confirmed_bookings():
     try:
-        cursor.execute("SELECT COUNT(*) FROM airlines")
+        cursor.execute("SELECT COUNT(*) FROM booking WHERE `status`='Confirmed'")
         return cursor.fetchone()
     except mysql.connector.Error as error:
         print("MySQL error:- ", error)
         return False
 
 
-def total_aircrafts():
+def total_pending_bookings():
     try:
-        cursor.execute("SELECT COUNT(*) FROM aircrafts")
-        return cursor.fetchone()
-    except mysql.connector.Error as error:
-        print("MySQL error:- ", error)
-        return False
-
-
-def total_managers():
-    try:
-        cursor.execute("SELECT COUNT(*) FROM manager")
+        cursor.execute("SELECT COUNT(*) FROM booking WHERE `status`='Pending'")
         return cursor.fetchone()
     except mysql.connector.Error as error:
         print("MySQL error:- ", error)
@@ -211,3 +133,9 @@ def total_bookings():
     except mysql.connector.Error as error:
         print("MySQL error:- ", error)
         return False
+
+
+# Close connection when done
+def close_connection():
+    cursor.close()
+    conn.close()
